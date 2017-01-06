@@ -5,6 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using postfix.Options;
 
 namespace postfix
 {
@@ -12,7 +18,8 @@ namespace postfix
     {
         private IHostingEnvironment _env;
         private IConfigurationRoot _config;
-        
+        SymmetricSecurityKey _signingKey;
+
         public Startup(IHostingEnvironment env) {
             _env = env;
 
@@ -29,6 +36,7 @@ namespace postfix
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(_config);
+            services.AddOptions();
 
             services.AddCors(options =>
             {
@@ -39,11 +47,40 @@ namespace postfix
                     .AllowCredentials() );
             });
 
-            services
-                .AddMvc(config => {
+            // Use policy auth.
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(
+                    "PostfixAdmins",
+                    policy => policy.RequireClaim("PostfixUserLevel", "1")
+                );
+            });
+
+            // Get options from app settings
+            var jwtAppSettingOptions = _config.GetSection(nameof(JwtIssuerOptions));
+
+            // Configure JwtIssuerOptions
+            string secretKey = _config["Keys:JwtKey"];
+            _signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
+
+            services.Configure<JwtIssuerOptions>(options =>
+            {
+                options.Issuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
+                options.Audience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)];
+                options.SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+            });
+
+            // Make authentication compulsory across the board (i.e. shut
+            // down EVERYTHING unless explicitly opened up).
+            services.AddMvc(config => {
                     if (_env.IsProduction()) {
                         config.Filters.Add(new RequireHttpsAttribute());
                     }
+
+                    var policy = new AuthorizationPolicyBuilder()
+                                        .RequireAuthenticatedUser()
+                                        .Build();
+                    config.Filters.Add(new AuthorizeFilter(policy));
                 })
                 .AddJsonOptions(config =>
                 {
@@ -56,6 +93,8 @@ namespace postfix
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            loggerFactory.AddConsole();
+
             if (_env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -70,6 +109,31 @@ namespace postfix
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
+
+            var jwtAppSettingOptions = _config.GetSection(nameof(JwtIssuerOptions));
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
+
+                ValidateAudience = true,
+                ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
+
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = _signingKey,
+
+                RequireExpirationTime = true,
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero
+            };
+
+            app.UseJwtBearerAuthentication(new JwtBearerOptions
+            {
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                TokenValidationParameters = tokenValidationParameters
+            });
 
             app.UseMvc(config => {
                 config.MapRoute(

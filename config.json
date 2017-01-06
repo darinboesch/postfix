@@ -1,4 +1,8 @@
 {
+    "JwtIssuerOptions": {
+        "Issuer": "SuperAwesomeTokenServer",
+        "Audience": "http://localhost:5000/"
+    },
     "MailSettings": {
         "ToAddress": "darinboesch@gmail.com"
     },

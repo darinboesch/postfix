@@ -1,7 +1,5 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace postfix
 {
-    public class Startup
+    public partial class Startup
     {
         private IHostingEnvironment _env;
         private IConfigurationRoot _config;
@@ -31,6 +29,15 @@ namespace postfix
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(_config);
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials() );
+            });
 
             services
                 .AddMvc(config => {
@@ -59,6 +66,9 @@ namespace postfix
                 loggerFactory.AddDebug(LogLevel.Error);
             }
 
+            app.UseCors("CorsPolicy");
+
+            app.UseDefaultFiles();
             app.UseStaticFiles();
 
             app.UseMvc(config => {

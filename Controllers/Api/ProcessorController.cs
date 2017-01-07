@@ -1,6 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using postfix.Models;
+using postfix.ViewModels;
 
 namespace postfix.Controllers.Api
 {
@@ -10,9 +13,11 @@ namespace postfix.Controllers.Api
     {
         [HttpPost()]
         [Authorize(Policy = "PostfixAdmins")]
-        public JsonResult Post()
+        public JsonResult Post([FromBody] ExecStackViewModel vm)
         {
-            return Json(new { response = "yada yada" });
+            var stack = Mapper.Map<ExecutionStack>(vm);
+
+            return Json(Mapper.Map<ExecStackViewModel>(stack));
         }
     }
 }

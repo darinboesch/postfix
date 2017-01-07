@@ -11,6 +11,9 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using postfix.Options;
+using AutoMapper;
+using postfix.ViewModels;
+using postfix.Models;
 
 namespace postfix
 {
@@ -133,6 +136,17 @@ namespace postfix
                 AutomaticAuthenticate = true,
                 AutomaticChallenge = true,
                 TokenValidationParameters = tokenValidationParameters
+            });
+
+            Mapper.Initialize(config =>
+            {
+                config
+                    .CreateMap<ExecStackViewModel, ExecutionStack>()
+                    .ReverseMap();
+                
+                config
+                    .CreateMap<StackItemViewModel, StackItem>()
+                    .ReverseMap();
             });
 
             app.UseMvc(config => {

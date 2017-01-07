@@ -1,0 +1,6 @@
+1. set up token based Auth
+2. establish the web api and set up an endpoint
+3. set up EF for MongoDB
+4. add Authentication using Owin and Identity from above
+5. design postfix processor service with a Core processor
+6. add a Math processor

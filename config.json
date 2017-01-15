@@ -6,8 +6,11 @@
     "MailSettings": {
         "ToAddress": "darinboesch@gmail.com"
     },
+    "Databases": {
+        "PostfixDatabaseName": "postfix"
+    },
     "ConnectionStrings": {
-        "WorldContextConnection": "Server=.;Database=TheWorldDb;Trusted_Connection=true;MultipleActiveResultSets=true;"
+        "PostfixConnection": "mongodb://localhost"
     },
     "Keys": {
         "BingKey": "DONTEVERPUTKEYSINSOURCECONTROL"

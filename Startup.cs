@@ -13,7 +13,9 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using postfix.Options;
 using AutoMapper;
 using postfix.ViewModels;
-using postfix.Models;
+using postfix.Models.Processor;
+using postfix.Models.User;
+using postfix.Shared.DataAccess;
 
 namespace postfix
 {
@@ -49,6 +51,8 @@ namespace postfix
                     .AllowAnyHeader()
                     .AllowCredentials() );
             });
+
+            //services.AddIdentity<IdentityUser, IdentityRole>();
 
             // Use policy auth.
             services.AddAuthorization(options =>
@@ -91,6 +95,9 @@ namespace postfix
                 });      // set up service for di container for Services
 
             services.AddLogging();
+
+            services.AddScoped<PostfixContext>();
+            services.AddScoped<IPostfixRepository, PostfixRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -140,6 +147,13 @@ namespace postfix
 
             Mapper.Initialize(config =>
             {
+                config
+                    .CreateMap<UserViewModel, PostfixUser>();
+
+                config
+                    .CreateMap<PostfixUser, UserViewModel>()
+                    .ForMember(x => x.Password, opt => opt.UseValue("<protected>"));
+
                 config
                     .CreateMap<ExecStackViewModel, ExecutionStack>()
                     .ReverseMap();

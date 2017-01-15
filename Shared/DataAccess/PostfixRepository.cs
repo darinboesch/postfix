@@ -2,7 +2,6 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using postfix.Models;
 using postfix.Models.User;
 
 namespace postfix.Shared.DataAccess
@@ -17,8 +16,9 @@ namespace postfix.Shared.DataAccess
             _logger = logger;
         }
 
-        public Task<ClaimsIdentity> GetClaimsIdentity(ApplicationUser user)
+        public Task<ClaimsIdentity> GetClaimsIdentity(PostfixUser user, string password)
         {
+            // todo
             throw new NotImplementedException();
         }
 

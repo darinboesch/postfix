@@ -8,8 +8,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
-using postfix.Models;
 using postfix.Options;
+using postfix.ViewModels;
+using AutoMapper;
+using postfix.Models.User;
+using postfix.Shared.DataAccess;
 
 namespace postfix.Controllers
 {
@@ -17,15 +20,17 @@ namespace postfix.Controllers
   public class JwtController : Controller
   {
     private readonly JwtIssuerOptions _jwtOptions;
-    private readonly ILogger _logger;
+    private IPostfixRepository _repository;
+    private ILogger<JwtController> _logger;
     private readonly JsonSerializerSettings _serializerSettings;
 
-    public JwtController(IOptions<JwtIssuerOptions> jwtOptions, ILoggerFactory loggerFactory)
+    public JwtController(IOptions<JwtIssuerOptions> jwtOptions, IPostfixRepository repository, ILogger<JwtController> logger)
     {
       _jwtOptions = jwtOptions.Value;
       ThrowIfInvalidOptions(_jwtOptions);
 
-      _logger = loggerFactory.CreateLogger<JwtController>();
+      _repository = repository;
+      _logger = logger;
 
       _serializerSettings = new JsonSerializerSettings
       {
@@ -35,43 +40,46 @@ namespace postfix.Controllers
 
     [HttpPost]
     [AllowAnonymous]
-    public async Task<IActionResult> Get([FromForm] ApplicationUser applicationUser)
+    public async Task<IActionResult> Get([FromForm] UserViewModel vm)
     {
-      var identity = await GetClaimsIdentity(applicationUser);
-      if (identity == null)
-      {
-        _logger.LogInformation($"Invalid username ({applicationUser.UserName}) or password ({applicationUser.Password})");
-        return BadRequest("Invalid credentials");
-      }
+        var user = Mapper.Map<PostfixUser>(vm);
+        //var identity = await _repository.GetClaimsIdentity(user, vm.Password);
 
-      var claims = new[]
-      {
-        new Claim(JwtRegisteredClaimNames.Sub, applicationUser.UserName),
-        new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
-        new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
-        identity.FindFirst("PostfixUserLevel")
-      };
+        var identity = await GetClaimsIdentity(user, vm.Password);
+        if (identity == null)
+        {
+          _logger.LogInformation($"Invalid username ({user.UserName}) or password ({vm.Password})");
+          return BadRequest("Invalid credentials");
+        }
 
-      // Create the JWT security token and encode it.
-      var jwt = new JwtSecurityToken(
-          issuer: _jwtOptions.Issuer,
-          audience: _jwtOptions.Audience,
-          claims: claims,
-          notBefore: _jwtOptions.NotBefore,
-          expires: _jwtOptions.Expiration,
-          signingCredentials: _jwtOptions.SigningCredentials);
+        var claims = new[]
+        {
+          new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+          new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
+          new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
+          identity.FindFirst("PostfixUserLevel")
+        };
 
-      var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+        // Create the JWT security token and encode it.
+        var jwt = new JwtSecurityToken(
+            issuer: _jwtOptions.Issuer,
+            audience: _jwtOptions.Audience,
+            claims: claims,
+            notBefore: _jwtOptions.NotBefore,
+            expires: _jwtOptions.Expiration,
+            signingCredentials: _jwtOptions.SigningCredentials);
 
-      // Serialize and return the response
-      var response = new
-      {
-        access_token = encodedJwt,
-        expires_in = (int)_jwtOptions.ValidFor.TotalSeconds
-      };
+        var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-      var json = JsonConvert.SerializeObject(response, _serializerSettings);
-      return new OkObjectResult(json);
+        // Serialize and return the response
+        var response = new
+        {
+          access_token = encodedJwt,
+          expires_in = (int)_jwtOptions.ValidFor.TotalSeconds
+        };
+
+        var json = JsonConvert.SerializeObject(response, _serializerSettings);
+        return new OkObjectResult(json);
     }
 
     private static void ThrowIfInvalidOptions(JwtIssuerOptions options)
@@ -103,10 +111,10 @@ namespace postfix.Controllers
     /// You'd want to retrieve claims through your claims provider
     /// in whatever way suits you, the below is purely for demo purposes!
     /// </summary>
-    private static Task<ClaimsIdentity> GetClaimsIdentity(ApplicationUser user)
+    private static Task<ClaimsIdentity> GetClaimsIdentity(PostfixUser user, string password)
     {
       if (user.UserName == "dboesch" &&
-          user.Password == "(pipster")
+          password == "(pipster")
       {
         return Task.FromResult(new ClaimsIdentity(new GenericIdentity(user.UserName, "Token"),
           new[]

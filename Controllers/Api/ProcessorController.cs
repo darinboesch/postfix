@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using postfix.Models;
 using postfix.Shared.DataAccess;
 using postfix.Models.Processor;
 using postfix.ViewModels;

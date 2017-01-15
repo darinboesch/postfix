@@ -15,9 +15,9 @@ namespace postfix.Controllers.Api
     public class UsersController : Controller
     {
         private IPostfixRepository _repository;
-        private ILogger<ProcessorController> _logger;
+        private ILogger<UsersController> _logger;
 
-        public UsersController(IPostfixRepository repository, ILogger<ProcessorController> logger) {
+        public UsersController(IPostfixRepository repository, ILogger<UsersController> logger) {
             _repository = repository;
             _logger = logger;
         }

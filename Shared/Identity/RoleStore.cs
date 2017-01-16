@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
 
-namespace postfix.Models.Identity
+namespace postfix.Shared.Identity
 {
     public class RoleStore<T> : IRoleStore<T>, IQueryableRoleStore<T>
                     where T : IdentityRole
@@ -27,7 +27,7 @@ namespace postfix.Models.Identity
 
         public Task<IdentityResult> UpdateAsync(T role, CancellationToken cancellationToken)
         {
-            _roles.ReplaceOneAsync(r => r.Id == role.Id, role); 
+            _roles.ReplaceOneAsync(r => r.Id == role.Id, role);
             return Task.FromResult(IdentityResult.Success);
         }
 

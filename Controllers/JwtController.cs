@@ -6,12 +6,9 @@ using Newtonsoft.Json;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using postfix.Options;
 using postfix.ViewModels;
-using AutoMapper;
-using postfix.Models.User;
 using postfix.Shared.DataAccess;
 
 namespace postfix.Controllers
@@ -42,19 +39,16 @@ namespace postfix.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> Get([FromForm] UserViewModel vm)
     {
-        var user = Mapper.Map<PostfixUser>(vm);
-        //var identity = await _repository.GetClaimsIdentity(user, vm.Password);
-
-        var identity = await GetClaimsIdentity(user, vm.Password);
+        var identity = await _repository.GetClaimsIdentity(vm.UserName, vm.Password);
         if (identity == null)
         {
-          _logger.LogInformation($"Invalid username ({user.UserName}) or password ({vm.Password})");
+          _logger.LogInformation($"Invalid username ({vm.UserName}) or password ({vm.Password})");
           return BadRequest("Invalid credentials");
         }
 
         var claims = new[]
         {
-          new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+          new Claim(JwtRegisteredClaimNames.Sub, vm.UserName),
           new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
           new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
           identity.FindFirst("PostfixUserLevel")
@@ -105,32 +99,5 @@ namespace postfix.Controllers
     /// <returns>Date converted to seconds since Unix epoch (Jan 1, 1970, midnight UTC).</returns>
     private static long ToUnixEpochDate(DateTime date)
       => (long)Math.Round((date.ToUniversalTime() - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalSeconds);
-
-    /// <summary>
-    /// IMAGINE BIG RED WARNING SIGNS HERE!
-    /// You'd want to retrieve claims through your claims provider
-    /// in whatever way suits you, the below is purely for demo purposes!
-    /// </summary>
-    private static Task<ClaimsIdentity> GetClaimsIdentity(PostfixUser user, string password)
-    {
-      if (user.UserName == "dboesch" &&
-          password == "(pipster")
-      {
-        return Task.FromResult(new ClaimsIdentity(new GenericIdentity(user.UserName, "Token"),
-          new[]
-          {
-            new Claim("PostfixUserLevel", "1")
-          }));
-      }
-
-    //   if (username is found and password is found, but only guest access)
-    //   {
-    //     return Task.FromResult(new ClaimsIdentity(new GenericIdentity(user.UserName, "Token"),
-    //       new Claim[] { }));
-    //   }
-
-      // Credentials are invalid, or account doesn't exist
-      return Task.FromResult<ClaimsIdentity>(null);
-    }
   }
 }

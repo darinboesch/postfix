@@ -1,4 +1,4 @@
-using postfix.Models.Identity;
+using postfix.Shared.Identity;
 
 namespace postfix.Models.User
 {

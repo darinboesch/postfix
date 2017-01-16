@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace postfix.Models.Identity
+namespace postfix.Shared.Identity
 {
     public class IdentityUserClaim
     {

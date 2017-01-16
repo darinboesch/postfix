@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
 
-namespace postfix.Models.Identity
+namespace postfix.Shared.Identity
 {
     public class UserStore<T> : IUserStore<T>,
                                 IUserPasswordStore<T>,
@@ -217,7 +217,9 @@ namespace postfix.Models.Identity
 
         public Task ReplaceClaimAsync(T user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            user.RemoveClaim(claim);
+            user.AddClaim(newClaim);
+            return Task.FromResult(0);
         }
 
         public Task RemoveClaimsAsync(T user, IEnumerable<Claim> claims, CancellationToken cancellationToken)

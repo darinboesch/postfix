@@ -1,7 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace postfix.Models.Identity
+namespace postfix.Shared.Identity
 {
     public class IdentityRole
     {

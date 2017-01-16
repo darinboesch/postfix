@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using postfix.Models.Identity;
+using postfix.Shared.Identity;
 using postfix.Models.User;
 
 namespace postfix.Shared.DataAccess
@@ -11,10 +11,12 @@ namespace postfix.Shared.DataAccess
     {
         private IConfigurationRoot _config;
         private ILogger<UserManager<PostfixUser>> _userManagerLogger;
+        private PasswordHasher<PostfixUser> _hasher = new PasswordHasher<PostfixUser>();
 
         public IMongoDatabase Database { get; set; }
         public UserManager<PostfixUser> UserManager { get; set; }
         public RoleManager<IdentityRole> RoleManager { get; set; }
+        public PasswordHasher<PostfixUser> PasswordHasher { get { return _hasher; } }
 
         public PostfixContext(IConfigurationRoot config, ILogger<UserManager<PostfixUser>> userManagerLogger) {
             _config = config;
@@ -25,7 +27,7 @@ namespace postfix.Shared.DataAccess
 
             var users = Database.GetCollection<PostfixUser>("users");
             var userStore = new UserStore<PostfixUser>(users);
-            UserManager = new UserManager<PostfixUser>(userStore, null, new PasswordHasher<PostfixUser>(),
+            UserManager = new UserManager<PostfixUser>(userStore, null, PasswordHasher,
                                                         null, null, null, null, null, _userManagerLogger);
 
             var roles = Database.GetCollection<IdentityRole>("roles");

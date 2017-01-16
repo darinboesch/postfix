@@ -27,23 +27,12 @@ namespace postfix.Controllers.Api
         public async Task<IActionResult> Post([FromBody] UserViewModel vm)
         {
             var user = Mapper.Map<PostfixUser>(vm);
-
-            await _repository.AddUser(user, vm.Password);
-            return Created($"api/users/{vm.UserName}", Mapper.Map<UserViewModel>(user));
-        }
-/*
-        [HttpPost()]
-        [Authorize(Policy = "PostfixAdmins")]
-        [Route("adduserclaim")]
-        public IActionResult AddUserClaim([FromBody] UserClaimViewModel vm)
-        {
-            var user = _repository.GetUserByName(vm.UserName);
-            if (user != null) {
-                return Json(user);
+            if (_repository.GetUserByName(user.UserName) == null) {
+                await _repository.AddUser(user, vm.Password);
+                return Created($"api/users/{user.UserName}", Mapper.Map<UserViewModel>(user));
             }
 
-            return Json.NotFound();
+            return BadRequest($"Unable to add user. User '{user.UserName}' already exists.");
         }
-*/
     }
 }

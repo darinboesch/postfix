@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace postfix.Models.Identity
+namespace postfix.Shared.Identity
 {
     // https://github.com/g0t4/aspnet-identity-mongo
     public class IdentityUser

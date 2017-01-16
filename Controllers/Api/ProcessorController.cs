@@ -22,10 +22,12 @@ namespace postfix.Controllers.Api
         }
 
         [HttpPost()]
-        [Authorize(Policy = "PostfixAdmins")]
+        [Authorize(Policy = "PostfixUsers")]
         public JsonResult Post([FromBody] ExecStackViewModel vm)
         {
             var stack = Mapper.Map<ExecutionStack>(vm);
+
+            // todo
 
             return Json(Mapper.Map<ExecStackViewModel>(stack));
         }

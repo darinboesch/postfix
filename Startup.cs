@@ -16,6 +16,7 @@ using postfix.ViewModels;
 using postfix.Models.Processor;
 using postfix.Models.User;
 using postfix.Shared.DataAccess;
+using postfix.Shared.Identity;
 
 namespace postfix
 {
@@ -59,7 +60,12 @@ namespace postfix
             {
                 options.AddPolicy(
                     "PostfixAdmins",
-                    policy => policy.RequireClaim("PostfixUserLevel", "1")
+                    policy => policy.RequireClaim("PostfixUserLevel", new [] {"Admin"})
+                );
+
+                options.AddPolicy(
+                    "PostfixUsers",
+                    policy => policy.RequireClaim("PostfixUserLevel", new [] {"Admin", "User"})
                 );
             });
 
@@ -155,6 +161,10 @@ namespace postfix
                     .ForMember(x => x.Password, opt => opt.UseValue("<protected>"));
 
                 config
+                    .CreateMap<IdentityUserClaim, ClaimViewModel>()
+                    .ReverseMap();
+
+                config
                     .CreateMap<ExecStackViewModel, ExecutionStack>()
                     .ReverseMap();
                 
@@ -166,7 +176,7 @@ namespace postfix
             app.UseMvc(config => {
                 config.MapRoute(
                     name: "Entry Point",
-                    template: "api",
+                    template: "api/{controller}/{action}/{id?}",
                     defaults: new { controller = "EntryPoint", action = "Get" }
                 );
             });

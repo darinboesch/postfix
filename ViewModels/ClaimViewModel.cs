@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace postfix.ViewModels
 {
-    public class UserViewModel
+    public class ClaimViewModel
     {
         [Required]
-        public string UserName { get; set; }
+        public string Type { get; set; }
 
         [Required]
-        public string Password { get; set; }
+        public string Value { get; set; }
     }
 }
